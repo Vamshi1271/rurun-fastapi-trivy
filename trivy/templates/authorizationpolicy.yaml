@@ -1,0 +1,46 @@
+{{- if .Values.authorizationPolicy.enabled }}
+{{- $namespace := .Values.namespace }}
+{{- $servicename := .Values.servicename }}
+{{- range $index, $policy := .Values.authorizationPolicy.policies }}
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  namespace: {{ $namespace }}
+  name: {{ $policy.name }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ $servicename }}
+  action: {{ $policy.action }}
+  rules:
+{{- range $policy.rules }}
+{{- if .from }}
+    - from:
+{{- if .source }}
+        - source:
+            {{- range .source }}
+            {{ .key }}: ["{{ .value }}"]
+            {{- end }}
+{{- end }}
+{{- end }}
+{{- if .to }}
+    - to:
+{{- if .operation }}
+        - operation:
+            methods: {{ .operation.methods }}
+{{- if .operation.paths }}
+            paths: {{ .operation.paths }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- if .when }}
+      when:
+{{- range .when }}
+        - key: {{ .key }}
+          values: {{ .values }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}

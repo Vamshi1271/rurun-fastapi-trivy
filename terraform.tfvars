@@ -1,0 +1,17 @@
+kubeconfig_path                         = "/home/gaian/.kube/config"
+trivy_namespace                         = "trivy-system"
+memory_requests                         = "2Gi"
+cpu_requests                            = "1"
+memory_limits                           = "4Gi"
+cpu_limits                              = "2"
+min_replicas                            = 1
+max_replicas                            = 1
+mobius_deploymentid                     = "testing"
+mobius_datacenter                       = "sifymini"
+mobius_component                        = "trivy"
+virtualservice_host                     = "ig.mobiusdtaas.ai"
+virtualservice_gateway                  = "istio-system/istio-gateway"
+# image                                   = "vamshi1271/myapp:v1"
+# virtualservice_host                     = "*"
+# virtualservice_gateway                  = "istio-gateway"
+image                                   = "vamshi1271/app-4:v3"

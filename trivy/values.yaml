@@ -1,0 +1,114 @@
+#service Details
+servicename: trivy
+namespace: ${namespace}
+labels:
+  app: trivy
+  job: python-app
+  mobius_deploymentid: ${mobius_deploymentid}
+  mobius_datacenter: ${mobius_datacenter}
+  mobius_component: ${mobius_component}
+
+# Destination Rule configuration
+destinationRule:
+  subsetName: v1
+  maxConnections: 300
+  maxPendingReq: 300
+  maxRequest: 500
+  reqPerConn: 1
+  consecutiveErrors: 5
+  interval: 5s
+  baseEjectionTime: 10s
+  labels:
+    version: v1
+
+# VirtualService values
+virtualService:
+  host: "${host}"
+  port: 8080
+  gateway: "${gateway}"
+  destinationSubset: v1
+  corsPolicy:
+    allowOrigins: "*"
+    allowCredentials: false
+    allowHeaders: "*"
+    maxAge: "24h"
+
+# AuthorizationPolicy values
+authorizationPolicy:
+  enabled: true
+  policies:
+    - name: trivy-swagger-rules
+      action: ALLOW
+      rules:
+        - from:
+            - source:
+                requestPrincipals: ["cluster.local/ns/istio-system/sa/istio-ingressgateway-service-account"]
+          to:
+            - operation:
+                methods: ["GET", "HEAD", "POST", "PUT", "DELETE", "OPTIONS"]
+
+    - name: trivy-other-rules
+      action: ALLOW
+      rules:
+        - to:
+            - operation:
+                methods: ["GET", "POST", "PUT", "DELETE", "PATCH"]
+          when:
+            - key: request.auth.claims[authorities]
+              values: ["ROLE_MARKETPLACE_USER", "ROLE_OMNI_CONSUMER"]
+          from:
+            - source:
+                requestPrincipals: ["cluster.local/ns/dev-mobius/sa/trivy"]
+
+# Deployment configuration
+deployment:
+  containerport: 8080
+  image: ${image}
+  terminationGracePeriodSeconds: 32
+  resources:
+    requests:
+      memory: "${memory_requests}"
+      cpu: "${cpu_requests}"
+    limits:
+      memory: "${memory_limits}"
+      cpu: "${cpu_limits}"
+  imagePullPolicy: Always
+  imagepullsecrets: docker-hub-registry-secret
+
+# Service values
+service:
+  type: NodePort
+  ports:
+    port: 8080
+    name: http
+
+# Values for HorizontalPodAutoscaler (HPA)
+hpa:
+  minReplicas: ${min_replicas}
+  maxReplicas: ${max_replicas}
+  metrics:
+    memory:
+      averageUtilization: 80
+    cpu:
+      averageUtilization: 80
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 120
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 15
+    scaleDown:
+      stabilizationWindowSeconds: 120
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 15
+
+# Values for verticalPodAutoscaler (VPA)
+verticalPodAutoscaler:
+  enabled: false
+  targetRef:
+    apiVersion: "apps/v1"
+  updatePolicy:
+    updateMode: "Off"

@@ -1,0 +1,39 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: {{ .Values.servicename }}-route
+  namespace: {{ .Values.namespace }}
+spec:
+  hosts:
+    - "{{ .Values.virtualService.host }}"
+  gateways:
+    - "{{ .Values.virtualService.gateway }}"
+  http:
+    - match:
+        - uri:
+            prefix: "/{{ .Values.servicename }}/"
+      rewrite:
+        uri: "/"
+      route:
+        - destination:
+            host: {{ .Values.servicename }}
+            port: 
+              number: {{ .Values.virtualService.port }}
+            subset: {{ .Values.virtualService.destinationSubset }}
+      corsPolicy:
+        allowOrigins:
+          - exact: "{{ .Values.virtualService.corsPolicy.allowOrigins }}"
+        allowMethods:
+          - POST
+          - GET
+          - PUT
+          - DELETE
+          - HEAD
+          - PATCH
+          - OPTIONS
+          - TRACE
+          - CONNECT
+        allowCredentials: {{ .Values.virtualService.corsPolicy.allowCredentials }}
+        allowHeaders:
+          - "{{ .Values.virtualService.corsPolicy.allowHeaders }}"
+        maxAge: "{{ .Values.virtualService.corsPolicy.maxAge }}"

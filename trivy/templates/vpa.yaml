@@ -1,0 +1,14 @@
+{{- if .Values.verticalPodAutoscaler.enabled }}
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: {{ .Values.servicename }}-vpa
+  namespace: {{ .Values.namespace }}
+spec:
+  targetRef:
+    apiVersion: "{{ .Values.verticalPodAutoscaler.targetRef.apiVersion }}"
+    kind: Deployment
+    name: "{{ .Values.servicename }}"
+  updatePolicy:
+    updateMode: "{{ .Values.verticalPodAutoscaler.updatePolicy.updateMode }}"
+{{- end }}

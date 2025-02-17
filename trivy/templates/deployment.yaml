@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.servicename }}
+  namespace: {{ .Values.namespace }}
+  annotations:
+    reloader.stakater.com/auto: "true"
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Values.servicename }}
+  template:
+    metadata:
+      name: {{ .Values.servicename }}
+      labels:
+        version: v1
+{{- range $key, $value := .Values.labels }}
+        {{ $key }}: "{{ $value }}"
+{{- end }}
+    spec:
+      terminationGracePeriodSeconds: {{ .Values.deployment.terminationGracePeriodSeconds }}
+      containers:
+        - name: {{ .Values.servicename }}
+          image: {{ .Values.deployment.image }}
+          resources:
+            requests:
+              memory: "{{ .Values.deployment.resources.requests.memory }}"
+              cpu: "{{ .Values.deployment.resources.requests.cpu }}"
+            limits:
+              memory: "{{ .Values.deployment.resources.limits.memory }}"
+              cpu: "{{ .Values.deployment.resources.limits.cpu }}"
+          imagePullPolicy: "{{ .Values.deployment.imagePullPolicy }}"
+          ports:
+            - containerPort: {{ .Values.deployment.containerport }}
+          env:
+{{- range $env := .Values.deployment.env }}
+            - name: "{{ $env.name }}"
+{{- if $env.value }}
+              value: "{{ $env.value }}"
+{{- end }}
+{{- if $env.valueFrom }}
+              valueFrom:
+{{- if $env.valueFrom.secretKeyRef }}
+                secretKeyRef:
+                  name: "{{ $env.valueFrom.secretKeyRef.name }}"
+                  key: "{{ $env.valueFrom.secretKeyRef.key }}"
+{{- end }}
+{{- end }}
+{{- end }}
+      serviceAccountName: {{ .Values.servicename }}
+      imagePullSecrets:
+        - name: "{{ .Values.deployment.imagepullsecrets }}"

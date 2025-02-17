@@ -1,0 +1,31 @@
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: {{ .Values.servicename  }}-destination
+  namespace: {{ .Values.namespace }}
+spec:
+  host: {{ .Values.servicename }}
+  subsets:
+    - name: {{ .Values.destinationRule.subsetName }}
+      labels:
+        {{- toYaml .Values.destinationRule.labels | nindent 8 }}
+  trafficPolicy:
+    # connectionPool:
+    #   tcp:
+    #     maxConnections: {{ .Values.destinationRule.maxConnections }}
+    #   http:
+    #     http1MaxPendingRequests: {{ .Values.destinationRule.maxPendingReq }}
+    #     http2MaxRequests: {{ .Values.destinationRule.maxRequest }}
+    #     maxRequestsPerConnection: {{ .Values.destinationRule.reqPerConn }}
+    outlierDetection:
+      http:
+        httpStatus:
+          - 500
+          - 501
+          - 502
+          - 503
+          - 504
+          - 505
+        consecutiveErrors: {{ .Values.destinationRule.consecutiveErrors }}
+        interval: {{ .Values.destinationRule.interval }}
+        baseEjectionTime: {{ .Values.destinationRule.baseEjectionTime }}
